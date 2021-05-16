@@ -18,32 +18,34 @@ domain = get_command_line_argument
 # https://www.rubydoc.info/stdlib/core/IO:readlines
 dns_raw = File.readlines("zone")
 
-def parse_dns(filelines) # filelines array(lines of a file) received as a parameter
-  filelines.each { |line| filelines.delete(line) if (line[0] == "#" or line == "\r\n") }  # Filtering out comments and empty line.
-  newhash = {}                        # Hash is build to store the lines of a file.
-  i = 1
-  filelines.each do |line|
-    key = "Line"                      # key named Line for each line of a file
-    line = (line.strip).split(", ")   # Line is striped and splited and added to the hash to the respected key
-    newhash[key + i.to_s] = line
-    i += 1
+def parse_dns(raw)
+  raw.
+    reject { |line| line.empty? }.
+    map { |line| line.strip.split(", ") }.
+    reject { |record| record.length < 3 or record[0][0] == "#" }.
+    each_with_object({}) do |record, records|
+    records[record[1]] = {
+      type: record[0],
+      target: record[2],
+    }
   end
-  newhash
 end
 
-def resolve(record, chain, domain) # Hash(lines of a file),lookup chain and the domain received as parameter
-  includearr = []                       # to store true or false whether the given domain is present in each line or not.
-  record.each do |key, arr|
-    includearr << arr.include?(domain)
-    if (arr[1] == domain && arr[0] == "A") # if middle value of array is domain and if it is a A record
-      return chain << arr[2]
-    elsif (arr[1] == domain && arr[0] == "CNAME") # if middle value of array is domain and if it is a CName record
-      chain << arr[2]
-      return resolve(record, chain, arr[2])  # recursion
+def resolve(dns_records, lookup_chain, domain)
+  dns_records.each do |key, record|
+    record = dns_records[domain]
+    if (!record)
+      lookup_chain.clear
+      return lookup_chain << "Error: Record not found for " + domain
+    elsif record[:type] == "CNAME"
+      lookup_chain << record[:target]
+      return resolve(dns_records, lookup_chain, record[:target])
+    elsif record[:type] == "A"
+      return lookup_chain << record[:target]
+    else
+      return lookup_chain << "Invalid record type for " + domain
     end
   end
-  chain[0] = "Error: record not found for #{domain}" if (includearr.all? { |a| a == false })  # if the domain name is not present in the record
-  chain
 end
 
 # To complete the assignment, implement `parse_dns` and `resolve`.
