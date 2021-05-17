@@ -43,6 +43,7 @@ def resolve(dns_records, lookup_chain, domain)
     elsif record[:type] == "A"
       return lookup_chain << record[:target]
     else
+      lookup_chain.clear
       return lookup_chain << "Invalid record type for " + domain
     end
   end
