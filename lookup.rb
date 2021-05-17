@@ -35,16 +35,14 @@ def resolve(dns_records, lookup_chain, domain)
   dns_records.each do |key, record|
     record = dns_records[domain]
     if (!record)
-      lookup_chain.clear
-      return lookup_chain << "Error: Record not found for " + domain
+      return ["Error: Record not found for " + domain]
     elsif record[:type] == "CNAME"
       lookup_chain << record[:target]
       return resolve(dns_records, lookup_chain, record[:target])
     elsif record[:type] == "A"
       return lookup_chain << record[:target]
     else
-      lookup_chain.clear
-      return lookup_chain << "Invalid record type for " + domain
+      return ["Invalid record type for " + domain]
     end
   end
 end
