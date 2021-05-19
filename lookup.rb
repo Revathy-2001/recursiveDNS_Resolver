@@ -22,7 +22,7 @@ def parse_dns(raw)
   raw.
     reject { |line| line.empty? }.
     map { |line| line.strip.split(", ") }.
-    reject { |record| record.length < 3 or record[0][0] == "#" }.
+    reject { |record| record.length < 3 || record[0][0] == "#" }.
     each_with_object({}) do |record, records|
     records[record[1]] = {
       type: record[0],
